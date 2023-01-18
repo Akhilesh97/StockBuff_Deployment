@@ -7,6 +7,7 @@ Created on Mon Nov 14 20:14:33 2022
 
 import pandas as pd
 import numpy as np
+import pathlib
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output, dash_table, State
@@ -20,9 +21,19 @@ import get_live_sentiment
 import numpy as np
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
 
-apple_sentiments_ = pd.read_csv("../outputs/Twitter_Microsoft_Sentiments_2015_2019.csv",lineterminator='\n')
+def load_data(data_file: str) -> pd.DataFrame:
+    '''
+    Load data from /data directory
+    '''
+    PATH = pathlib.Path(__file__).parent
+    DATA_PATH = PATH.joinpath("data").resolve()
+    return pd.read_csv(DATA_PATH.joinpath(data_file))
+
+#apple_sentiments_ = pd.read_csv("../outputs/Twitter_Microsoft_Sentiments_2015_2019.csv",lineterminator='\n')
+apple_sentiments_ = load_data("Twitter_Microsoft_Sentiments_2015_2019.csv")
 apple_sentiments = apple_sentiments_[['date', 'Negative', 'Neutral', 'Positive', 'Sentiment', 'Polarity','Deep_tweet']]
 min_polarity = round(min(apple_sentiments["Polarity"]),2)
 max_polarity = round(max(apple_sentiments["Polarity"]),2)
@@ -371,11 +382,12 @@ app.callback(
 )
 def return_pred_graph(input_val):
     if input_val == "lstm-basic":
-        apple_preds = pd.read_csv("../outputs/LSTM_Outputs_Basic.csv")
+        #apple_preds = pd.read_csv("../outputs/LSTM_Outputs_Basic.csv")
+        apple_preds = load_data("LSTM_Outputs_Basic.csv")
     elif input_val == "lstm-one-feat":
-        apple_preds = pd.read_csv("../outputs/LSTM_Outputs_One_Feat.csv")
+        apple_preds = load_data("LSTM_Outputs_One_Feat.csv")
     else:
-        apple_preds = pd.read_csv("../outputs/LSTM_Outputs_Multi_Feat.csv")
+        apple_preds = load_data("LSTM_Outputs_Multi_Feat.csv")
     figure = plot_line(apple_preds)
     return figure
 
@@ -390,4 +402,4 @@ def return_sentiment_table(value):
     dt = plot_table(table_to_plot)
     return dt
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
